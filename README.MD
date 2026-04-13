@@ -13,7 +13,7 @@ On entraine notre algorithme sur des échantillons du train set (mini batch)
 J’ai compris qu’Afin d’optimiser la memoire on va seulement travailler donc sur un X linéarisé et le trainset sera un tableau des indices des lignes en faisant parties, j’étais parti sur recréer un tableau entier mais j’ai compris que ce n’était pas nécessaire et que ca nous épargnerais des ressources.
 
 
-Le code s’articulera en 2 boucle : Une pour les miniBatch et qui traversera le Dataset et l'autres pour chaque Epocj
+Le code s’articulera en 2 boucle : Une pour les miniBatch et qui traversera le Dataset et l'autres pour chaque Epoch
 
 On utilisera la methode de descente de gradient :  on utilisera MSE. MSE<=> L=1/n Σeps(i)^2 en calculant le gradient a la main 
 
