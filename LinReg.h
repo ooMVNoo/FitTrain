@@ -6,9 +6,10 @@
 
 using namespace std;
 
+enum LossType{MSE,BCE};
+
 
 class LinReg : public FitTrain {
-
     private:
 
     //Attributs
@@ -33,20 +34,16 @@ class LinReg : public FitTrain {
     vector<int> trainSet();//génere un trainSet aléatoire 
     vector<int> batch();//genere selon la taille du ts des "batch set"
 
-
-
-
-
-
     public:
 
     LinReg(vector<vector<float>> x, vector<float> y,float LR,int TP); //Constructeur 
 
     int linIndex(int i,int j);//linearise l'index : 2D->1D [i][j]->[k=i*col+j]
     
-    vector<float> fit(); //Calcule les poids de la régression linéaire
+    vector<float> fit(LossType LT); //Calcule les poids de la régression linéaire
     vector<float> predict(vector<vector<float>> xp);//predit selon un vecteur de variable predictrice la variable cible
-    
+
+    float getB();
     
 
 };
