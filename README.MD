@@ -29,13 +29,6 @@ Hérite de `LinReg`. Ajoute deux méthodes pratiques pour la classification bina
 - `logistic_proba(vector<vector<float>> Xp)` : retourne les probabilités (après sigmoïde).
 - `logistic_prediction(vector<vector<float>> Xp, float seuil)` : retourne 0/1 selon le seuil (défaut 0.5).
 
-## Compilation
-
-Exemple avec `clang++` :
-
-```bash
-clang++ -std=c++17 -o mon_prog FitTrain.cpp LinReg.cpp LogReg.cpp votre_fichier_main.cpp
-
 ## Idée de base 
 
 Afin de démontrer ma compréhension des bases du Machine learning et de ma maitrise du C++ je vais réaliser une bibliothèques de machine learning dans ce language,
