@@ -1,7 +1,9 @@
-#include "LinReg.h"
+
+    #include "LinReg.h"
 #include<vector>
 #include<iostream>
 #include<random>
+#include <cmath>
 
 LinReg::LinReg(vector<vector<float>> x, vector<float> y,float LR,int TP):X(x),Y(y),lr(LR),trainPercent(TP){
     col= X[0].size();
@@ -52,7 +54,7 @@ vector<int> LinReg::batch(){
             return mBatch_index;
 };
 
-vector<float> LinReg::fit(){
+vector<float> LinReg::fit(LossType LT){
 
     vector<int> tscopy=trainSetIndex;
     w.clear();
@@ -85,71 +87,106 @@ vector<float> LinReg::fit(){
 
         while(trainSetIndex.size()>=mBatch_size){
 
-            
-
             mBatch_index.clear();
             //1)initialisation de mBatchIndex et on vide en parallele trainSetIndex
 
             batch();
             
-
             //BATCH: la on trouve les poids 
 
-            //2)On calcule les variable cible
-
-            for(int i =0;i<mBatch_size;i++){
-                float yi=b;
-                for(int j=0;j<col;j++){
-                    yi+=w[j]*X_lin[linIndex(mBatch_index[i],j)];
+            if(LT==MSE){
+                //2)On calcule les variables cible
+                vector<float> y_p(mBatch_size);
+                for(int i =0;i<mBatch_size;i++){
+                    float yi=b;
+                    for(int j=0;j<col;j++){
+                        yi+=w[j]*X_lin[linIndex(mBatch_index[i],j)];
+                    };
+                    y_p[i]=yi;
                 };
-                y_p.push_back(yi);
-            };
-                     
-            //3)calcul epsilon et L
-
-            vector<float> eps;
-
-            for(int i=0;i<mBatch_size;i++){
-                eps.push_back(Y[mBatch_index[i]]-y_p[i]);
-            };
-            float l=0;
-            for(int i=0;i<mBatch_size;i++){
-                l+=((float(1)/float(mBatch_size))*(eps[i])*(eps[i]));
-            };
-
-            L_of_a_batch.push_back(l);
-
-
-            //4)calcul gradient de la fonction de cout : on utilisera MSE. MSE<=> L=1/n Σeps(i)^2 en calculant le gradient a la main(je derive d((yi-ypi)^2)=2 ( d/da (yi-ypi)) (y-yi) et d/da (yi-ypi) = somme de ( -xi1) donc et (yi-ypi) lui c'est eps i) j'obtient grad(L)=(1/n Σ -2x11eps1 ,...)
-
-            vector<float> grad;
-            
-            for(int j=0;j<col;j++){
-                float dldw=0;
-                
+                         
+                //3)calcul epsilon et L
+                vector<float> eps;
                 for(int i=0;i<mBatch_size;i++){
-                    dldw=dldw-(2*X_lin[linIndex(mBatch_index[i],j)]*eps[i]);
-                    
+                    eps.push_back(Y[mBatch_index[i]]-y_p[i]);
                 };
-                grad.push_back((1.0f/float(mBatch_size))*dldw);
-            };
+                float l=0;
+                for(int i=0;i<mBatch_size;i++){
+                    l+=((float(1)/float(mBatch_size))*(eps[i])*(eps[i]));
+                };
+                L_of_a_batch.push_back(l);
 
-            float dldb = 0.0f;
+                //4)calcul gradient de la fonction de cout : on utilisera MSE. MSE<=> L=1/n Σeps(i)^2 en calculant le gradient a la main(je derive d((yi-ypi)^2)=2 ( d/da (yi-ypi)) (y-yi) et d/da (yi-ypi) = somme de ( -xi1) donc et (yi-ypi) lui c'est eps i) j'obtient grad(L)=(1/n Σ -2x11eps1 ,...)
+                vector<float> grad;
+                for(int j=0;j<col;j++){
+                    float dldw=0;
+                    for(int i=0;i<mBatch_size;i++){
+                        dldw=dldw-(2*X_lin[linIndex(mBatch_index[i],j)]*eps[i]);
+                    };
+                    grad.push_back((1.0f/float(mBatch_size))*dldw);
+                };
+                float dldb = 0.0f;
+                for(int i=0; i<mBatch_size; i++){
+                    dldb += -2.0f * eps[i];
+                };
+                dldb *= (1.0f / float(mBatch_size));
 
-            for(int i=0; i<mBatch_size; i++){
-                dldb += -2.0f * eps[i];
-            };
-            dldb *= (1.0f / float(mBatch_size));
+                //5)calcul w=pn+1=pn-lr*gradL et biais
+                for(int k=0;k<w.size();k++){
+                    w[k]=w[k]-lr*grad[k];
+                };
+                b=b-lr*dldb;
+            }
+            else if(LT==BCE){
 
-            //5)calcul w=pn+1=pn-lr*gradL et biais
+                // Calcul des probabilités (sigmoid)
 
-            for(int k=0;k<w.size();k++){
+                vector<float> proba(mBatch_size);
+                for(int i = 0; i < mBatch_size; i++) {
+                    float z = b;
+                    for(int j = 0; j < col; j++) {
+                        z += w[j] * X_lin[linIndex(mBatch_index[i], j)];
+                    }
+                    proba[i] = 1.0f / (1.0f + exp(-z));
+                }
 
-                w[k]=w[k]-lr*grad[k];
-                
-            };
+                // Loss BCE
 
-            b=b-lr*dldb;
+                float loss = 0.0f;
+
+                for(int i = 0; i < mBatch_size; i++) {
+                    float yi = Y[mBatch_index[i]];
+                    float pi = proba[i];
+                    loss += -(yi * log(pi) + (1 - yi) * log(1 - pi));
+                }
+
+                loss /= mBatch_size;
+                L_of_a_batch.push_back(loss);
+
+                // Gradient pour BCE
+
+                vector<float> grad(col, 0.0f);
+
+                float dldb = 0.0f;
+
+                for(int i = 0; i < mBatch_size; i++) {
+                    float diff = proba[i] - Y[mBatch_index[i]];
+                    dldb += diff;
+                    for(int j = 0; j < col; j++) {
+                        grad[j] += diff * X_lin[linIndex(mBatch_index[i], j)];
+                    }
+                }
+
+                for(int j = 0; j < col; j++) grad[j] /= mBatch_size;
+                dldb /= mBatch_size;
+
+                // Mise à jour
+
+                for(int k = 0; k < w.size(); k++){
+                    w[k] = w[k] - lr * grad[k];
+                }
+                b = b - lr * dldb;
+            }
         };
         float avgLofepoch=0;
         for(int n=0;n<L_of_a_batch.size();n++){
@@ -163,8 +200,6 @@ vector<float> LinReg::fit(){
 
     };
 
-    
-    w.push_back(b);
     return w;
 
 };
@@ -191,6 +226,9 @@ int LinReg::linIndex(int i,int j){
     return i*col+j;
 };
 
+float LinReg::getB(){
+    return this->b;
+};
 
 
     
