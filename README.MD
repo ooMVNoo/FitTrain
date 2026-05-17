@@ -1,4 +1,42 @@
-#Fit train		
+# FitTrain
+
+Deux modèles de régression (linéaire et logistique) codés à la main en C++.  
+Pas de dépendances externes, juste `vector` et `cmath`.
+
+## Classes
+
+### `FitTrain`
+
+Classe de base utilitaire. Propose :
+- `val_in_tab(int val, vector<int> tab)` : teste si une valeur est dans un tableau.
+- `linearize(vector<vector<float>> tab)` : transforme une matrice en vecteur 1D.
+
+Elle est abstraite (méthode `linIndex` virtuelle pure) : vous ne l’instanciez pas directement.
+
+### `LinReg`
+
+Régression linéaire classique.  
+Constructeur :  
+`LinReg(vector<vector<float>> X, vector<float> Y, float learningRate, int trainPercent)`  
+
+Principales méthodes :
+- `fit(LossType LT)` : entraîne le modèle. `LossType` peut être `MSE` (erreur quadratique) ou `BCE` (entropie croisée – utile pour la logistique). Retourne `vector<float>` des poids (le biais est stocké séparément, mais accessible dans l’attribut `b`).
+- `predict(vector<vector<float>> Xp)` : retourne les prédictions (valeurs linéaires brutes pour `MSE`, logits pour `BCE`).
+
+### `LogReg`
+
+Hérite de `LinReg`. Ajoute deux méthodes pratiques pour la classification binaire :
+- `logistic_proba(vector<vector<float>> Xp)` : retourne les probabilités (après sigmoïde).
+- `logistic_prediction(vector<vector<float>> Xp, float seuil)` : retourne 0/1 selon le seuil (défaut 0.5).
+
+## Compilation
+
+Exemple avec `clang++` :
+
+```bash
+clang++ -std=c++17 -o mon_prog FitTrain.cpp LinReg.cpp LogReg.cpp votre_fichier_main.cpp
+
+## Idée de base 
 
 Afin de démontrer ma compréhension des bases du Machine learning et de ma maitrise du C++ je vais réaliser une bibliothèques de machine learning dans ce language,
 
