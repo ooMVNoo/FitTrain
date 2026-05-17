@@ -3,6 +3,13 @@
 #include<iostream>
 #include<random>
 
+
+
+LogReg::LogReg(vector<vector<float>> x, vector<float> y, float LR, int TP): LinReg(x, y, LR, TP){
+    this->fit(BCE);
+
+};
+
 vector<float> LogReg::logistic_proba(vector<vector<float>> xp){
     vector<float> xp_score=predict(xp);
 
