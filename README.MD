@@ -1,7 +1,6 @@
 # FitTrain
 
-Deux modèles de régression (linéaire et logistique) codés à la main en C++.  
-Pas de dépendances externes, juste `vector` et `cmath`.
+Librairie ML From Scratch en C++ (En cours)
 
 ## Classes
 
