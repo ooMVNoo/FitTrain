@@ -1,53 +1,49 @@
-# FitTrain
+# Régression linéaire et logistique en C++
 
-Librairie ML From Scratch en C++ (En cours)
+Implémentation de la régression linéaire et de la régression logistique par descente de gradient par mini-batch, sans dépendance externe.
 
-## Classes
+## Structure
 
-### `FitTrain`
+| Fichier | Rôle |
+|---|---|
+| `FitTrain.h/.cpp` | Classe abstraite : utilitaires communs (linéarisation d'un tableau 2D, recherche d'une valeur dans un tableau) |
+| `LinReg.h/.cpp` | Régression linéaire ; entraînement avec perte MSE ou BCE |
+| `LogReg.h/.cpp` | Régression logistique, dérivée de `LinReg` |
+| `test.cpp` | Exemple d'utilisation |
 
-Classe de base utilitaire. Propose :
-- `val_in_tab(int val, vector<int> tab)` : teste si une valeur est dans un tableau.
-- `linearize(vector<vector<float>> tab)` : transforme une matrice en vecteur 1D.
+## Fonctionnement
 
-Elle est abstraite (méthode `linIndex` virtuelle pure) : vous ne l’instanciez pas directement.
+- Le jeu d'entraînement est un sous-ensemble aléatoire de `X`, défini par un pourcentage. Seuls les indices des lignes sont stockés.
+- La taille du mini-batch dépend de la taille du jeu d'entraînement : entière jusqu'à 1 000 lignes, 64 jusqu'à 100 000, puis 256.
+- Les poids sont initialisés aléatoirement, le biais à zéro.
+- L'entraînement s'arrête lorsque la variation de la perte entre deux époques passe sous `1e-6`, ou après 1 000 époques.
 
-### `LinReg`
+## Utilisation
 
-Régression linéaire classique.  
-Constructeur :  
-`LinReg(vector<vector<float>> X, vector<float> Y, float learningRate, int trainPercent)`  
+```cpp
+#include "LinReg.h"
 
-Principales méthodes :
-- `fit(LossType LT)` : entraîne le modèle. `LossType` peut être `MSE` (erreur quadratique) ou `BCE` (entropie croisée – utile pour la logistique). Retourne `vector<float>` des poids (le biais est stocké séparément, mais accessible dans l’attribut `b`).
-- `predict(vector<vector<float>> Xp)` : retourne les prédictions (valeurs linéaires brutes pour `MSE`, logits pour `BCE`).
+LinReg rg(X, Y, 0.01f, 60);   // données, cibles, learning rate, % d'entraînement
+vector<float> w = rg.fit(MSE);
+vector<float> y = rg.predict(Xp);
+float b = rg.getB();
+```
 
-### `LogReg`
+```cpp
+#include "LogReg.h"
 
-Hérite de `LinReg`. Ajoute deux méthodes pratiques pour la classification binaire :
-- `logistic_proba(vector<vector<float>> Xp)` : retourne les probabilités (après sigmoïde).
-- `logistic_prediction(vector<vector<float>> Xp, float seuil)` : retourne 0/1 selon le seuil (défaut 0.5).
+LogReg lg(X, Y, 0.01f, 60);   // l'entraînement (BCE) a lieu à la construction
+vector<float> p = lg.logistic_proba(Xp);
+vector<float> c = lg.logistic_prediction(Xp, 0.5f);
+```
 
-## Idée de base 
+Les cibles de la régression logistique doivent valoir 0 ou 1.
 
-Afin de démontrer ma compréhension des bases du Machine learning et de ma maitrise du C++ je vais réaliser une bibliothèques de machine learning dans ce language,
+## Compilation
 
-On sait que C++ est sensible au niveau de l’allocation de mémoire, nos choix seront donc justifié nottament les Tableaux : afin d’être contigu et gagner en memoire on transformera notre matrice en vector , on « linéarise » donc notre matrice en codant [i][j]->[i*col+j]
+```
+g++ -o test test.cpp LinReg.cpp FitTrain.cpp
+./test
+```
 
-On crée notre methode fit avec la méthode de la descente de gradient :
-
--1 ere étape : mini Batch 
-
-On entraine notre algorithme sur des échantillons du train set (mini batch) 
-
-J’ai compris qu’Afin d’optimiser la memoire on va seulement travailler donc sur un X linéarisé et le trainset sera un tableau des indices des lignes en faisant parties, j’étais parti sur recréer un tableau entier mais j’ai compris que ce n’était pas nécessaire et que ca nous épargnerais des ressources.
-
-
-Le code s’articulera en 2 boucle : Une pour les miniBatch et qui traversera le Dataset et l'autres pour chaque Epoch
-
-On utilisera la methode de descente de gradient :  on utilisera MSE. MSE<=> L=1/n Σeps(i)^2 en calculant le gradient a la main 
-
-Un epoch s’arrete quand le delta du Loss devient negligeable (dl<1e-6)
-
-
-
+Pour utiliser `LogReg`, ajouter `LogReg.cpp` à la liste des fichiers sources.
